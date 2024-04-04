@@ -23,7 +23,7 @@ import com.sist.web.entity.Flowerstore;
 import com.sist.web.entity.Flowersubimg;
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class FlowerRestController {
 @Autowired
 private FlowerListDAO dao;
@@ -32,16 +32,18 @@ private FlowerDetailDAO fdDao;
 @Autowired
 private FlowerStoreDAO fsDao;
 
-@GetMapping("/flower/list_react/{page}/{cate_minor}")
-public ResponseEntity<Map> flowerList(@PathVariable("page") int page,@PathVariable("cate_minor") String cate_minor,@RequestParam("name") String name)
+@GetMapping("/flower/list_react/{page}")
+public ResponseEntity<Map> flowerList(@PathVariable("page") int page,@RequestParam("cate_minor") String cate_minor,@RequestParam("name") String name)
 {
+	System.out.println("실행");
+
 	Map map;
 	int rowsize=10;
 	int start=(page*rowsize)-rowsize;
 	final int BLOCK=5;
 	int startpage=((page-1)/BLOCK*BLOCK)+1;
 	int endpage=((page-1)/BLOCK*BLOCK)+BLOCK;
-	System.out.println(cate_minor);
+	
 	try {
 		List<Flowerlist> list;
 		List<Flowerlist> list2=dao.flowerHitData(cate_minor);
