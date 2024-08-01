@@ -29,4 +29,5 @@ public class Promember {
 	private String addr;
 	private String phone;
 	private String email;
+	private String addrdetail;
 }

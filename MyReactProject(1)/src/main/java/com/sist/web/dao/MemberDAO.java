@@ -14,4 +14,6 @@ public interface MemberDAO extends JpaRepository<Promember, Integer>{
 	   
 	public Promember findById(String id);
 	
+	int countById(String id);
+	
 }
