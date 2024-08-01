@@ -21,57 +21,27 @@ import com.sist.web.dao.FlowerStoreDAO;
 import com.sist.web.entity.Flowerlist;
 import com.sist.web.entity.Flowerstore;
 import com.sist.web.entity.Flowersubimg;
+import com.sist.web.service.FlowerService;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 public class FlowerRestController {
+
 @Autowired
-private FlowerListDAO dao;
-@Autowired
-private FlowerDetailDAO fdDao;
-@Autowired
-private FlowerStoreDAO fsDao;
+private FlowerService fService;
 
 @GetMapping("/flower/list_react/{page}")
 public ResponseEntity<Map> flowerList(@PathVariable("page") int page,@RequestParam("cate_minor") String cate_minor,@RequestParam("name") String name)
 {
 	System.out.println("실행");
-
-	Map map;
-	int rowsize=10;
-	int start=(page*rowsize)-rowsize;
-	final int BLOCK=5;
-	int startpage=((page-1)/BLOCK*BLOCK)+1;
-	int endpage=((page-1)/BLOCK*BLOCK)+BLOCK;
 	
 	try {
-		List<Flowerlist> list;
-		List<Flowerlist> list2=dao.flowerHitData(cate_minor);
-		int totalpage;
-		if(name.isEmpty()) {
-			list=dao.flowerListData(start,cate_minor);
-			totalpage=dao.totalpage(cate_minor);
-		}
-		else {
-			list=dao.flowerSearchData(start, name, cate_minor);
-			totalpage=dao.searchTotalpage(name, cate_minor);
-		}
-		if(endpage>totalpage)
-			   endpage=totalpage; 
-		System.out.println(cate_minor);
-		map=new HashMap();
-		map.put("list",list);
-		map.put("list2",list2);
-	    map.put("curpage", page);
-	    map.put("startpage", startpage);
-		map.put("endpage", endpage);
-		map.put("totalpage", totalpage);
+		Map map=fService.getFlowerList(page, cate_minor, name);
+        return new ResponseEntity<>(map, HttpStatus.OK);
 	}
 	catch(Exception ex) {
 		return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-			
-		return new ResponseEntity<>(map,HttpStatus.OK);
 }
 	
 
@@ -79,40 +49,19 @@ public ResponseEntity<Map> flowerList(@PathVariable("page") int page,@RequestPar
 public ResponseEntity<Map> boardDetail(@PathVariable("fno") int fno)
 {
 
-	Flowerlist listdata;
-	Map map;
 	try {
-		if(fno!=0)
-		{
-			listdata=dao.flowerDetailData(fno);
-			listdata.setHit(listdata.getHit() + 1);
-		    dao.save(listdata); 
-		}
-		listdata=dao.flowerDetailData(fno);
-		map=new HashMap();
-		map.put("list_data",listdata);
-		map.put("sub_img", fdDao.findByFno(fno));
+		Map map= fService.getFlowerDeatil(fno);
+        return new ResponseEntity<>(map, HttpStatus.OK);
 		
 	}catch(Exception ex) {
 		return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	return new ResponseEntity<>(map,HttpStatus.OK);
 }
 
 @GetMapping("/flower/store_react")
 public List<Flowerstore> flowerStore(int flsno)
 {
-	// 이미 존재하는 객체이기때문에 새롭게 생성하면 X => hit 외 나머지값은 이미 db에 데이터가 저장되어있기때문임
-	if(flsno!=0)
-	{
-		Flowerstore store = fsDao.findByFlsno(flsno);
-		store.setHit(store.getHit() + 1);
-	    fsDao.save(store);   
-	    List<Flowerstore> list = fsDao.flowerStore();
-	    return list;
-	}
-	
-	List<Flowerstore> list = fsDao.flowerStore();
+	List<Flowerstore> list=fService.flowerStore(flsno);
 	return list;
 }
 

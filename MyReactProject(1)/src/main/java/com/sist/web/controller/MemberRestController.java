@@ -1,5 +1,6 @@
 package com.sist.web.controller;
 import com.sist.web.entity.*;
+import com.sist.web.service.MemberService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,37 +16,18 @@ import java.util.*;
 @CrossOrigin(origins = "*")
 public class MemberRestController {
    @Autowired
-   private MemberDAO mDao;
+   private MemberService mService;
   
    @GetMapping("/member/login/{id}/{pwd}")
    public ResponseEntity<Map> memberLogin(@PathVariable("id") String id,@PathVariable("pwd") String pwd)
    {
-	   Map map=new HashMap();
 	   try
 	   {
-		   int count=mDao.idCount(id);
-		   if(count==0)
-		   {
-			   map.put("msg", "NOID");
-		   }
-		   else
-		   {
-			   Promember mem=mDao.findById(id);
-			   if(pwd.equals(mem.getPwd()))
-			   {
-				   map.put("name", mem.getName());
-				   map.put("id", mem.getId());
-				   map.put("msg", "OK");
-			   }
-			   else
-			   {
-				  map.put("msg", "NOPWD"); 
-			   }
-		   }
+		   Map map=mService.memberLogin(id, pwd);
+		   return new ResponseEntity<>(map,HttpStatus.OK);
 	   }catch(Exception ex)
 	   {
 		   return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	   }
-	   return new ResponseEntity<>(map,HttpStatus.OK);
    }
 }

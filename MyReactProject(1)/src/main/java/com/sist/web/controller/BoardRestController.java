@@ -16,15 +16,15 @@ import com.sist.web.dao.BoardDAO;
 import com.sist.web.dao.BoardDetailDAO;
 import com.sist.web.entity.BoardVO;
 import com.sist.web.entity.Myboard;
+import com.sist.web.service.BoardService;
 
 import java.util.*;
 @RestController
 @CrossOrigin(origins = "*")
 public class BoardRestController {
+	
 @Autowired
-private BoardDAO bDao;
-@Autowired
-private BoardDetailDAO bdDao;
+private BoardService bService;
 
 @GetMapping("/board/list_myboard/{page}")
 public ResponseEntity<Map> boardListData(@PathVariable("page") int page)
@@ -32,13 +32,12 @@ public ResponseEntity<Map> boardListData(@PathVariable("page") int page)
 	  Map map=new HashMap();
 	  try
 	  {
-		  int rowsize=10;
-		  int start=(rowsize*page)-rowsize; 
-		  List<Myboard> list=bDao.boardListData(start);
-		  int totalpage=(int)(Math.ceil(bDao.count()/10.0));
-		  map.put("bList", list);
-		  map.put("totalpage", totalpage);
-		  map.put("curpage", page);
+		  int rowsize = 10;
+          List<Myboard> list = bService.getBoardList(page, rowsize);
+          int totalpage = bService.getTotalPages(rowsize);
+          map.put("bList", list);
+          map.put("totalpage", totalpage);
+          map.put("curpage", page);
 	  }catch(Exception ex)
 	  {
 		  return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
@@ -49,18 +48,21 @@ public ResponseEntity<Map> boardListData(@PathVariable("page") int page)
 @GetMapping("/board/detail_myboard/{no}")
 public ResponseEntity<Myboard> boardDetailData(@PathVariable("no") int no)
 {
-	    Myboard board=null;
-	    try
+		try
 	    {
-	    	board=bDao.findByNo(no);
-	    	board.setHit(board.getHit()+1);
-	    	bDao.save(board);
-	    	board=bDao.findByNo(no);
-	    }catch(Exception ex)
+			 Myboard board=bService.getboardDetail(no);
+	         if (board!=null) {
+	        	 System.out.println(board.getHit());
+	        	 return new ResponseEntity<>(board, HttpStatus.OK);
+	         }
+	         else {
+	        	 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	         }
+	    }
+	    catch(Exception ex)
 	    {
 	    	return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	    }
-	    return new ResponseEntity<>(board,HttpStatus.OK);
 }
 
 @PostMapping("/board/insert_myboard")
@@ -69,7 +71,7 @@ public ResponseEntity<Map> boardInsert(@RequestBody Myboard board)
 	  Map map=new HashMap();
 	  try
 	  {
-		  Myboard insert=bDao.save(board);
+		  Myboard insert=bService.boardInsert(board);
 		  map.put("board", insert);
 		  map.put("msg", "yes");
 	  }catch(Exception ex)
@@ -82,41 +84,32 @@ public ResponseEntity<Map> boardInsert(@RequestBody Myboard board)
 @GetMapping("/board/update_myboard/{no}")
 public ResponseEntity<Myboard> boardUpdateData(@PathVariable("no") int no)
 {
-	  Myboard board=null;
 	  try
 	  {
-		  board=bDao.findByNo(no);
+		Myboard  board=bService.boardUpdate(no);
 	  }catch(Exception ex)
 	  {
 		  return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	  }
-	  return new ResponseEntity<>(board,HttpStatus.OK);
+	  return new ResponseEntity<>(null,HttpStatus.OK);
 }
-
+//
 @PutMapping("/board/update_ok_myboard/{no}")
 public ResponseEntity<Map> boardUpDataOk(@PathVariable("no") int no, @RequestBody Myboard board)
 {
 	  Map map=new HashMap();
 	  try
 	  {
-		  Myboard dbBoard=bDao.findByNo(no);
-		  if(dbBoard.getPwd().equals(board.getPwd()))
-		  {
-			  board.setNo(no);
-			  board.setHit(dbBoard.getHit());
-			  Myboard b=bDao.save(board);
-			  map.put("board", b);
-			  map.put("msg", "yes");
-		  }
-		  else
-		  {
-			  map.put("msg", "no");
-		  }
+		  Map result=bService.updateBoard(no, board);
+          if ("yes".equals(result.get("msg"))) {
+              return new ResponseEntity<>(result, HttpStatus.OK);
+          } else {
+              return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
+          }
 	  }catch(Exception ex)
 	  {
 		  return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	  }
-	  return new ResponseEntity<>(map,HttpStatus.OK);
 }
 
 @DeleteMapping("/board/delete_myboard/{no}/{pwd}")
@@ -125,20 +118,18 @@ public ResponseEntity<Map> boardDelete(@PathVariable("no") int no, @PathVariable
 	  Map map=new HashMap();
 	  try
 	  {
-		  Myboard board=bDao.findByNo(no);
-		  if(pwd.equals(board.getPwd()))
+		  Map result=bService.boardDelete(no, pwd);
+		  if("yes".equals(result.get("msg")))
 		  {
-			  bDao.delete(board);
-			  map.put("msg", "yes");
+			  return new ResponseEntity<>(result,HttpStatus.OK);
 		  }
 		  else
 		  {
-			  map.put("msg", "no");
+			  return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
 		  }
 	  }catch(Exception ex)
 	  {
 		  return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
 	  }
-	  return new ResponseEntity<>(map,HttpStatus.OK);
 }
 }
